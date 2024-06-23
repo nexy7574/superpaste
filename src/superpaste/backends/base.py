@@ -6,7 +6,7 @@ import pathlib
 from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib.metadata import version
-from typing import Generator, Iterable, List, Optional, Protocol, TypeVar, Union
+from typing import Generator, Iterable, List, Optional, Protocol, TypeVar, Union, overload
 
 import httpx
 
@@ -70,6 +70,9 @@ class BasePasteFile:
     def __hash__(self):
         return hash((self.content,))
 
+    def as_json(self):
+        return NotImplemented
+
     @classmethod
     def from_file(cls, file: os.PathLike) -> "BasePasteFile":
         if not isinstance(file, pathlib.Path):
@@ -119,8 +122,19 @@ class BaseBackend(abc.ABC):
         else:
             yield session
 
+    @overload
+    def create_paste(self, files: BasePasteFileProtocol) -> BasePasteResult:
+        ...
+
+    @overload
+    def create_paste(self, *files: BasePasteFileProtocol) -> List[BasePasteResult]:
+        ...
+
     @abc.abstractmethod
-    def create_paste(self, *files: BasePasteFile) -> Union[BasePasteResult, List[BasePasteResult]]:
+    def create_paste(
+            self,
+            *files: BasePasteFileProtocol
+    ) -> Union[BasePasteResult, List[BasePasteResult]]:
         """
         Creates a paste.
 
@@ -129,7 +143,15 @@ class BaseBackend(abc.ABC):
         """
         raise NotImplementedError
 
-    async def async_create_paste(self, *files: BasePasteFile) -> Union[BasePasteResult, List[BasePasteResult]]:
+    @overload
+    async def async_create_paste(self, files: BasePasteFileProtocol) -> BasePasteResult:
+        ...
+
+    @overload
+    async def async_create_paste(self, *files: BasePasteFileProtocol) -> List[BasePasteResult]:
+        ...
+
+    async def async_create_paste(self, *files: BasePasteFileProtocol) -> Union[BasePasteResult, List[BasePasteResult]]:
         """
         Creates a paste asynchronously.
 

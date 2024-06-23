@@ -2,11 +2,11 @@
 Backend for posting pastes to http://hst.sh.
 """
 
-from typing import List, Union
+from typing import List, Union, overload
 
 import httpx
 
-from .base import BaseBackend, BasePasteFile, BasePasteResult
+from .base import BaseBackend, BasePasteFile, BasePasteResult, BasePasteFileProtocol
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
@@ -20,33 +20,47 @@ class HstSHBackend(BaseBackend):
     def __init__(self, session: httpx.Client = None):
         self._session = session
 
-    def create_paste(self, *files: BasePasteFile) -> Union[BasePasteResult, List[BasePasteResult]]:
+    @overload
+    def create_paste(self, files: BasePasteFileProtocol) -> BasePasteResult:
+        ...
+
+    @overload
+    def create_paste(self, *files: BasePasteFileProtocol) -> List[BasePasteResult]:
+        ...
+
+    def create_paste(self, *files: BasePasteFileProtocol) -> Union[BasePasteResult, List[BasePasteResult]]:
+        if len(files) > 1:
+            self._logger.warning(
+                "Posting %d files to hst.sh; hst.sh only supports 1 file per paste, "
+                "so multiple pastes will be made.",
+                len(files),
+            )
+            r = []
+            for file in files:
+                r.append(self.create_paste(file))
+            return r
+
         with self.with_session(self._session) as session:
-            results = []
             for file in files:
                 if isinstance(file.content, bytes):
                     try:
                         file.content = file.content.decode("utf-8")
                     except UnicodeDecodeError:
                         raise ValueError("hst.sh only supports text files.")
-                response: httpx.Response = session.post(
-                    self.post_url,
-                    data=file.content,
-                    headers={
-                        "Accept": "application/json, text/javascript, */*; q=0.01",
-                        "Content-Type": "text/plain; charset=UTF-8",
-                    },
-                )
-                response.raise_for_status()
-
-                key = response.json()["key"]
-                results.append(
-                    BasePasteResult(
-                        self.base_url + "/" + key,
-                        key,
-                    )
-                )
-            return results if len(results) > 1 else results[0]
+            response: httpx.Response = session.post(
+                self.post_url,
+                data=file.content,
+                headers={
+                    "Accept": "application/json, text/javascript, */*; q=0.01",
+                    "Content-Type": "text/plain; charset=UTF-8",
+                },
+            )
+            response.raise_for_status()
+            key = response.json()["key"]
+            return BasePasteResult(
+                self.html_url.format(key=key),
+                key,
+            )
 
     def get_paste(self, key: str) -> BasePasteFile:
         with self.with_session(self._session) as session:

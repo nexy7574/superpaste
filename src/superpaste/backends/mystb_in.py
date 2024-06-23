@@ -6,11 +6,11 @@ import datetime
 import os
 import pathlib
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, overload
 
 import httpx
 
-from .base import BaseBackend, BasePasteFile, BasePasteResult, as_chunks
+from .base import BaseBackend, BasePasteResult, as_chunks, BasePasteFileProtocol
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
@@ -77,15 +77,23 @@ class MystbinBackend(BaseBackend):
     def __init__(self, session: httpx.Client = None):
         self._session = session
 
+    @overload
+    def create_paste(self, files: MystbinFile) -> MystbinResult:
+        ...
+
+    @overload
+    def create_paste(self, *files: MystbinFile) -> List[MystbinResult]:
+        ...
+
     def create_paste(
-        self, *files: Union[MystbinFile, BasePasteFile], expires: datetime.datetime = None, password: str = None
+        self, *files: MystbinFile, expires: datetime.datetime = None, password: str = None
     ) -> Union[MystbinResult, List[MystbinResult]]:
         if expires and expires < datetime.datetime.now(datetime.timezone.utc):
             raise ValueError("expires must be in the future")
         if len(files) > 5:
             self._logger.warning(
                 "Posting %d files to Mystbin; Mystbin only supports 5 files per-paste, so this will have to be split"
-                " up into multiple pastes. Please consider reducing the number of files you need."
+                " up into multiple pastes."
             )
             results = []
             for chunk in as_chunks(files, 5):
