@@ -3,19 +3,18 @@ import asyncio
 import logging
 import os
 import pathlib
-
-import httpx
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Union, Optional, List, Iterable, TypeVar, Generator, Protocol, Type
 from importlib.metadata import version
+from typing import Generator, Iterable, List, Optional, Protocol, TypeVar, Union
 
+import httpx
 
 __all__ = (
-    'BasePasteFileProtocol',
-    'BasePasteFile',
-    'BasePasteResult',
-    'BaseBackend',
+    "BasePasteFileProtocol",
+    "BasePasteFile",
+    "BasePasteResult",
+    "BaseBackend",
     "__author__",
     "__user_agent__",
     "as_chunks",
@@ -55,19 +54,14 @@ def as_chunks(iterable: Iterable[T], size: int) -> Generator[List[T], None, None
 class BasePasteFileProtocol(Protocol):
     content: Union[str, bytes]
 
-    def __hash__(self) -> int:
-        ...
+    def __hash__(self) -> int: ...
 
     @classmethod
-    def from_file(cls: T, file: pathlib.Path) -> T:
-        ...
+    def from_file(cls: T, file: pathlib.Path) -> T: ...
 
 
 class BasePasteFile:
-    def __init__(
-            self,
-            content: Union[str, bytes]
-    ):
+    def __init__(self, content: Union[str, bytes]):
         self.content = content
 
     def __repr__(self):
@@ -77,7 +71,7 @@ class BasePasteFile:
         return hash((self.content,))
 
     @classmethod
-    def from_file(cls, file: os.PathLike) -> 'BasePasteFile':
+    def from_file(cls, file: os.PathLike) -> "BasePasteFile":
         if not isinstance(file, pathlib.Path):
             file = pathlib.Path(file)
         try:
@@ -89,6 +83,7 @@ class BasePasteFile:
 @dataclass
 class BasePasteResult:
     """The result of creating a paste"""
+
     url: str
     key: str
 
@@ -97,10 +92,7 @@ class BasePasteResult:
 
     @classmethod
     def from_response(cls, backend: "BaseBackend", data: dict) -> "BasePasteResult":
-        return cls(
-            url=backend.html_url.format(key=data["key"]),
-            key=data.pop("key")
-        )
+        return cls(url=backend.html_url.format(key=data["key"]), key=data.pop("key"))
 
 
 class BaseBackend(abc.ABC):
@@ -117,7 +109,7 @@ class BaseBackend(abc.ABC):
         return logging.getLogger(f"superpaste.backends.{self.name.lower()}")
 
     @contextmanager
-    def with_session(self, session: Optional[httpx.Client]) -> 'httpx.Client':
+    def with_session(self, session: Optional[httpx.Client]) -> "httpx.Client":
         """
         Return a client session, closing it properly if it was created by this method.
         """

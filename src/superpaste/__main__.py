@@ -6,33 +6,26 @@ from typing import Dict, Type
 
 def main():
     from . import backends
+
     backend_list: Dict[str, Type[backends.BaseBackend]] = {
         x.name: x
         for x in backends.__dict__.values()
-        if isinstance(x, type) and
-        issubclass(x, backends.BaseBackend)
-        and x != backends.BaseBackend
+        if isinstance(x, type) and issubclass(x, backends.BaseBackend) and x != backends.BaseBackend
     }
     # This is so ugly. I love it.
 
-    parser = argparse.ArgumentParser(description='SuperPaste - paste anywhere')
+    parser = argparse.ArgumentParser(description="SuperPaste - paste anywhere")
+    parser.add_argument("--backend", "-b", type=str, choices=list(backend_list.keys()), help="Backend to use")
     parser.add_argument(
-        '--backend',
-        '-b',
+        "files",
+        metavar="FILE",
         type=str,
-        choices=list(backend_list.keys()),
-        help='Backend to use'
-    )
-    parser.add_argument(
-        'files',
-        metavar='FILE',
-        type=str,
-        nargs='+',
-        help='Files to paste. `-` reads from stdin, everything else resolves to file paths.'
+        nargs="+",
+        help="Files to paste. `-` reads from stdin, everything else resolves to file paths.",
     )
     args = parser.parse_args()
     if not args.files:
-        parser.error('No files specified')
+        parser.error("No files specified")
 
     backend = backend_list[args.backend]()
     parsed_files = []

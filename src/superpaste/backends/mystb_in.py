@@ -1,31 +1,31 @@
 """
 Backend for posting pastes to http://mystb.in
 """
+
 import datetime
 import os
 import pathlib
 from dataclasses import dataclass
-from typing import List, Union, Dict, Optional
+from typing import Dict, List, Optional, Union
 
 import httpx
 
 from .base import BaseBackend, BasePasteFile, BasePasteResult, as_chunks
-
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
 
 class MystbinFile:
     def __init__(
-            self,
-            content: str,
-            filename: str = None,
-            *,
-            parent_id: str = None,
-            loc: int = None,
-            charcount: int = None,
-            annotation: str = None,
-            warning_positions: list = None
+        self,
+        content: str,
+        filename: str = None,
+        *,
+        parent_id: str = None,
+        loc: int = None,
+        charcount: int = None,
+        annotation: str = None,
+        warning_positions: list = None,
     ):
         if len(content) > 300_000:
             raise ValueError("Mystbin only supports pastes up to 300,000 characters.")
@@ -38,23 +38,17 @@ class MystbinFile:
         self.warning_positions = warning_positions
 
     @classmethod
-    def from_file(cls, file: os.PathLike) -> 'MystbinFile':
+    def from_file(cls, file: os.PathLike) -> "MystbinFile":
         if not isinstance(file, pathlib.Path):
             file = pathlib.Path(file)
-        return cls(
-            content=file.read_text(),
-            filename=file.name
-        )
+        return cls(content=file.read_text(), filename=file.name)
 
     def as_payload(self: "MystbinFile") -> Dict[str, str]:
         """
         Returns the file as a JSON-serializable dictionary.
         :return: the payload
         """
-        x = {
-            "filename": self.filename,
-            "content": self.content
-        }
+        x = {"filename": self.filename, "content": self.content}
         if not self.filename:
             del x["filename"]
         return x
@@ -69,11 +63,7 @@ class MystbinResult(BasePasteResult):
 
     @classmethod
     def from_response(cls, backend: "MystbinBackend", data: dict) -> "MystbinResult":
-        return cls(
-            url=backend.html_url.format(key=data["id"]),
-            key=data.pop("id"),
-            **data
-        )
+        return cls(url=backend.html_url.format(key=data["id"]), key=data.pop("id"), **data)
 
 
 class MystbinBackend(BaseBackend):
@@ -88,10 +78,7 @@ class MystbinBackend(BaseBackend):
         self._session = session
 
     def create_paste(
-            self,
-            *files: Union[MystbinFile, BasePasteFile],
-            expires: datetime.datetime = None,
-            password: str = None
+        self, *files: Union[MystbinFile, BasePasteFile], expires: datetime.datetime = None, password: str = None
     ) -> Union[MystbinResult, List[MystbinResult]]:
         if expires and expires < datetime.datetime.now(datetime.timezone.utc):
             raise ValueError("expires must be in the future")
@@ -127,7 +114,5 @@ class MystbinBackend(BaseBackend):
             data = response.json()
             files = []
             for file in data["files"]:
-                files.append(
-                    MystbinFile(**file)
-                )
+                files.append(MystbinFile(**file))
             return files

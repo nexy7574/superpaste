@@ -1,12 +1,12 @@
 """
 Backend for posting pastes to http://hst.sh.
 """
+
 from typing import List, Union
 
 import httpx
 
 from .base import BaseBackend, BasePasteFile, BasePasteResult
-
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
@@ -35,7 +35,7 @@ class HstSHBackend(BaseBackend):
                     headers={
                         "Accept": "application/json, text/javascript, */*; q=0.01",
                         "Content-Type": "text/plain; charset=UTF-8",
-                    }
+                    },
                 )
                 if response.status_code != 301:
                     response.raise_for_status()
