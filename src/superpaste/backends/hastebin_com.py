@@ -1,6 +1,8 @@
 """
-Backend for posting pastes to http://hst.sh.
+Backend for posting pastes to http://hastebin.com
 """
+
+# NOTE: Hastebin.com has moved to toptal.com/developers/hastebin.
 
 from typing import List, Union
 
@@ -11,14 +13,28 @@ from .base import BaseBackend, BasePasteFile, BasePasteResult
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
 
-class HstSHBackend(BaseBackend):
-    name = "hst.sh"
-    base_url = "https://hst.sh"
-    post_url = "https://hst.sh/documents"
-    html_url = "https://hst.sh/{key}"
+class HastebinBackend(BaseBackend):
+    name = "toptal-hastebin"
+    base_url = "https://hastebin.com"
+    post_url = "https://hastebin.com/documents"
+    html_url = "https://hastebin.com/{key}"
 
-    def __init__(self, session: httpx.Client = None):
+    def __init__(self, session: httpx.Client = None, *, token: str):
+        """
+        :param session: An optional pre-existing session to use. Will be auto-generated if not provided.
+        :param token: The API token from toptal: https://www.toptal.com/developers/hastebin/documentation
+        """
+        self.token = token
         self._session = session
+
+    def headers(self):
+        h = {
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "Content-Type": "text/plain; charset=UTF-8"
+        }
+        if self.token:
+            h["Authorization"] = f"Bearer {self.token}"
+        return h
 
     def create_paste(self, *files: BasePasteFile) -> Union[BasePasteResult, List[BasePasteResult]]:
         with self.with_session(self._session) as session:
@@ -28,14 +44,11 @@ class HstSHBackend(BaseBackend):
                     try:
                         file.content = file.content.decode("utf-8")
                     except UnicodeDecodeError:
-                        raise ValueError("hst.sh only supports text files.")
+                        raise ValueError("hastebin.com only supports text files.")
                 response: httpx.Response = session.post(
                     self.post_url,
                     data=file.content,
-                    headers={
-                        "Accept": "application/json, text/javascript, */*; q=0.01",
-                        "Content-Type": "text/plain; charset=UTF-8",
-                    },
+                    headers=self.headers(),
                 )
                 response.raise_for_status()
 
@@ -50,6 +63,11 @@ class HstSHBackend(BaseBackend):
 
     def get_paste(self, key: str) -> BasePasteFile:
         with self.with_session(self._session) as session:
-            response: httpx.Response = session.get(self.base_url + "/raw/" + key)
+            response: httpx.Response = session.get(
+                self.base_url + "/raw/" + key,
+                headers={
+                    self.headers()
+                }
+            )
             response.raise_for_status()
             return BasePasteFile(response.text)
