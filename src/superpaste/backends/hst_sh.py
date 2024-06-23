@@ -51,6 +51,6 @@ class HstSHBackend(BaseBackend):
 
     def get_paste(self, key: str) -> BasePasteFile:
         with self.with_session(self._session) as session:
-            response: httpx.Response = session.get(self.base_url + "/" + key)
+            response: httpx.Response = session.get(self.base_url + "/raw/" + key)
             response.raise_for_status()
             return BasePasteFile(response.text)
