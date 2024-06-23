@@ -1,6 +1,7 @@
 import abc
 import asyncio
 import logging
+import os
 import pathlib
 
 import httpx
@@ -76,7 +77,9 @@ class BasePasteFile:
         return hash((self.content,))
 
     @classmethod
-    def from_file(cls, file: pathlib.Path) -> 'BasePasteFile':
+    def from_file(cls, file: os.PathLike) -> 'BasePasteFile':
+        if not isinstance(file, pathlib.Path):
+            file = pathlib.Path(file)
         try:
             return cls(file.read_text())
         except UnicodeDecodeError:

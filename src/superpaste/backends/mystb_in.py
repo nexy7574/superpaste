@@ -2,6 +2,7 @@
 Backend for posting pastes to http://mystb.in
 """
 import datetime
+import os
 import pathlib
 from dataclasses import dataclass
 from typing import List, Union, Dict, Optional
@@ -37,7 +38,9 @@ class MystbinFile:
         self.warning_positions = warning_positions
 
     @classmethod
-    def from_file(cls, file: pathlib.Path) -> 'MystbinFile':
+    def from_file(cls, file: os.PathLike) -> 'MystbinFile':
+        if not isinstance(file, pathlib.Path):
+            file = pathlib.Path(file)
         return cls(
             content=file.read_text(),
             filename=file.name
