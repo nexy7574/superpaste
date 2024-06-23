@@ -3,6 +3,7 @@ from .hastebin_com import HastebinBackend
 from .hst_sh import HstSHBackend
 from .mystb_in import MystbinBackend, MystbinFile, MystbinResult
 from .paste_ee import PasteEEBackend, PasteEEFile
+from .hastebin_skyra_pw import HastebinSkyraPWBackend
 
 __all__ = [
     "BaseBackend",
@@ -15,4 +16,5 @@ __all__ = [
     "HastebinBackend",
     "PasteEEBackend",
     "PasteEEFile",
+    "HastebinSkyraPWBackend",
 ]

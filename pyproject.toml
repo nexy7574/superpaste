@@ -35,6 +35,9 @@ classifiers = [
     "Topic :: Utilities"
 ]
 
+[project.optional-dependencies]
+auto_mime = ["python-magic>=0.4.27"]
+
 #[project.urls]
 #Source = "https://github.com/nexy7574/nio-bot"
 #Tracker = "https://github.com/nexy7574/nio-bot/issues"

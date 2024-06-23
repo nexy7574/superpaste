@@ -109,7 +109,7 @@ class BaseBackend(abc.ABC):
     @property
     def _logger(self) -> logging.Logger:
         """Gets the logger for this backend"""
-        return logging.getLogger(f"superpaste.backends.{self.name.lower()}")
+        return logging.getLogger(f"superpaste.backends.{self.name.lower().replace('.', '_')}")
 
     @contextmanager
     def with_session(self, session: Optional[httpx.Client]) -> "httpx.Client":
