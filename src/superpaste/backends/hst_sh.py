@@ -29,6 +29,15 @@ class HstSHBackend(BaseBackend):
         ...
 
     def create_paste(self, *files: BasePasteFileProtocol) -> Union[BasePasteResult, List[BasePasteResult]]:
+        """
+        Create a paste on hst.sh
+
+        .. warning::
+            hst.sh only supports 1 file per paste. If more than one file is provided, multiple pastes will be made.
+
+        :param files: The files to post
+        :return: The paste, or multiple if multiple files were provided.
+        """
         if len(files) > 1:
             self._logger.warning(
                 "Posting %d files to hst.sh; hst.sh only supports 1 file per paste, "

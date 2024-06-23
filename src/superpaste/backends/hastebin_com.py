@@ -42,6 +42,15 @@ class HastebinBackend(BaseBackend):
         ...
 
     def create_paste(self, *files: BasePasteFileProtocol) -> Union[BasePasteResult, List[BasePasteResult]]:
+        """
+        Create a paste on hastebin.com
+
+        .. warning::
+            hastebin.com only supports 1 file per paste. If more than one file is provided, multiple pastes will be made.
+
+        :param files: The files to post.
+        :return: The paste, or multiple if multiple files were provided.
+        """
         if len(files) > 1:
             self._logger.warning(
                 "Posting %d files to hastebin.com; hastebin.com only supports 1 file per paste, "
@@ -74,6 +83,12 @@ class HastebinBackend(BaseBackend):
             )
 
     def get_paste(self, key: str) -> BasePasteFile:
+        """
+        Gets a paste from hastebin.com
+
+        :param key: The paste key to get.
+        :return: The file that was in the paste.
+        """
         with self.with_session(self._session) as session:
             response: httpx.Response = session.get(self.base_url + "/raw/" + key, headers={self.headers()})
             response.raise_for_status()

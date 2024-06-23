@@ -46,7 +46,7 @@ class PasteEEBackend(BaseBackend):
         """
         Creates a paste on paste.ee
 
-        !!! danger "Limits"
+        .. warning::
             Paste.ee only supports 5 files per paste, and up to 6MB
             See [their wiki/acceptable use policy](https://paste.ee/wiki/AUP) for more information.
 
@@ -96,6 +96,12 @@ class PasteEEBackend(BaseBackend):
             return BasePasteResult(data["link"], data["id"])
 
     def get_paste(self, key: str) -> List[PasteEEFile]:
+        """
+        Gets a paste from paste.ee
+
+        :param key: The key of the paste to get
+        :return: A list of files that were in the paste
+        """
         r = []
         with self.with_session(self._session) as session:
             response: httpx.Response = session.get(

@@ -88,6 +88,20 @@ class MystbinBackend(BaseBackend):
     def create_paste(
         self, *files: MystbinFile, expires: datetime.datetime = None, password: str = None
     ) -> Union[MystbinResult, List[MystbinResult]]:
+        """
+        Creates a paste on Mystbin
+
+        .. warning::
+            Mystbin only supports 5 files per paste. Pasting more than 5 files at once will result in multiple pastes.
+
+        .. warning::
+            Mystbin does not utilise end-to-end encryption. Passwords are only used to access the paste.
+
+        :param files: The files to paste
+        :param expires: A datetime (in the future) when the pastes should automatically be deleted. Default: never
+        :param password: A password to use to protect the paste. Default: None
+        :return: The paste result (a list of them if >5 files)
+        """
         if expires and expires < datetime.datetime.now(datetime.timezone.utc):
             raise ValueError("expires must be in the future")
         if len(files) > 5:
@@ -115,6 +129,13 @@ class MystbinBackend(BaseBackend):
             return MystbinResult.from_response(self, data)
 
     def get_paste(self, key: str, password: Optional[str] = None) -> List[MystbinFile]:
+        """
+        Fetches a paste from Mystbin
+
+        :param key: The key of the paste to fetch
+        :param password: The password to use to access the paste
+        :return: A list of files in the paste
+        """
         with self.with_session(self._session) as session:
             response: httpx.Response = session.get(self.base_url + "/" + key)
             response.raise_for_status()
