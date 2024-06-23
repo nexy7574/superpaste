@@ -28,7 +28,7 @@ class PasteEEFile(BasePasteFile):
 
 class PasteEEBackend(BaseBackend):
     name = "paste.ee"
-    base_url = "https://api.paste.ee"
+    base_url = "https://api.paste.ee/v1/pastes"
     post_url = "https://api.paste.ee/v1/pastes"
     html_url = "https://hst.sh/{key}"
 

@@ -68,7 +68,7 @@ class MystbinResult(BasePasteResult):
 
 class MystbinBackend(BaseBackend):
     name = "mystb.in"
-    base_url = "https://mystb.in"
+    base_url = "https://mystb.in/api/paste"
     post_url = "https://mystb.in/api/paste"
     html_url = "https://mystb.in/{key}"
     result_class = MystbinResult
