@@ -35,8 +35,11 @@ class GenericBackend(BaseBackend):
     result_class = GenericResult
 
     def __init__(
-            self
+            self,
+            base_url: str = None
     ):
+        if base_url:
+            self.base_url = base_url  # override class var
         self.post_url = self.base_url + "/documents"
         self.html_url = self.base_url + "/{key}"
 
