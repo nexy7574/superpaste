@@ -6,12 +6,13 @@ from typing import List, Union
 
 import httpx
 
-from .base import BaseBackend, BasePasteFile, BasePasteResult, as_chunks
+from .base import BaseBackend, BaseResult, as_chunks
+from .mystb_in import MystbinFile
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
 
-class PasteEEFile(BasePasteFile):
+class PasteEEFile(MystbinFile):
     # noinspection PyShadowingBuiltins
     def __init__(self, content: str, filename: str = None, syntax: str = "autodetect", *, id: int = None):
         super().__init__(content)
@@ -22,27 +23,27 @@ class PasteEEFile(BasePasteFile):
     def __hash__(self):
         return hash((self.content, self.filename))
 
-    def as_json(self):
-        return {"content": self.content, "filename": self.filename, "syntax": self.syntax}
+    def as_payload(self):
+        x = super().as_payload()
+        if self.syntax:
+            x["syntax"] = self.syntax
+        return x
 
 
 class PasteEEBackend(BaseBackend):
     name = "paste.ee"
-    base_url = "https://api.paste.ee/v1/pastes"
-    post_url = "https://api.paste.ee/v1/pastes"
+    base_url = post_url = "https://api.paste.ee/v1/pastes"
     html_url = "https://hst.sh/{key}"
 
-    def __init__(self, session: httpx.Client = None, *, token: str):
+    def __init__(self, token: str):
         """
-        :param session: An optional httpx session to use for requests
         :param token: The API token to use for authentication
         """
         self.token = token
-        self._session = session
 
     def create_paste(
-        self, *files: PasteEEFile, paste_description: str = None, encrypted: bool = False
-    ) -> Union[BasePasteResult, List[BasePasteResult]]:
+        self, *files: Union[PasteEEFile, MystbinFile], paste_description: str = None, encrypted: bool = False
+    ) -> Union[BaseResult, List[BaseResult]]:
         """
         Creates a paste on paste.ee
 
@@ -57,18 +58,13 @@ class PasteEEBackend(BaseBackend):
         :raises ValueError: If any of the files are not text files.
         """
         if len(files) > 5:
-            self._logger.warning(
-                "Posting %d files to paste.ee; paste.ee only supports 5 files per-paste, so this will have to be split"
-                " up into multiple pastes. Please consider reducing the number of files you need.",
-                len(files),
-            )
             results = []
             for chunk in as_chunks(files, 5):
                 self._logger.debug("Posting files to paste.ee: %r", chunk)
                 results.append(self.create_paste(*chunk))
             return results
 
-        with self.with_session(self._session) as session:
+        with self.with_session() as session:
             for file in files:
                 if isinstance(file.content, bytes):
                     try:
@@ -76,7 +72,7 @@ class PasteEEBackend(BaseBackend):
                     except UnicodeDecodeError:
                         raise ValueError("paste.ee only supports text files.")
 
-            payload = {"sections": [x.as_json() for x in files]}
+            payload = {"sections": [x.as_payload() for x in files]}
             if paste_description:
                 payload["description"] = paste_description
             if encrypted:
@@ -87,13 +83,12 @@ class PasteEEBackend(BaseBackend):
                     "encrypted": False,
                     "description": "SuperPaste",
                 },
-                headers={"Accept": "application/json, text/javascript, */*; q=0.01"},
                 auth=(self.token, ""),
             )
             response.raise_for_status()
 
             data = response.json()
-            return BasePasteResult(data["link"], data["id"])
+            return BaseResult(data["id"], data["link"])
 
     def get_paste(self, key: str) -> List[PasteEEFile]:
         """
@@ -103,7 +98,7 @@ class PasteEEBackend(BaseBackend):
         :return: A list of files that were in the paste
         """
         r = []
-        with self.with_session(self._session) as session:
+        with self.with_session() as session:
             response: httpx.Response = session.get(
                 self.post_url + "/" + key
             )

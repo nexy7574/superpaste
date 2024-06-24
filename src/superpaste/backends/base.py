@@ -2,18 +2,16 @@ import abc
 import asyncio
 import logging
 import os
-import pathlib
 from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib.metadata import version
-from typing import Generator, Iterable, List, Optional, Protocol, TypeVar, Union, overload
+from typing import Generator, Iterable, List, Optional, TypeVar, Union, overload, Literal, Dict
 
 import httpx
 
 __all__ = (
-    "BasePasteFileProtocol",
-    "BasePasteFile",
-    "BasePasteResult",
+    "BaseFile",
+    "BaseResult",
     "BaseBackend",
     "__author__",
     "__user_agent__",
@@ -51,90 +49,74 @@ def as_chunks(iterable: Iterable[T], size: int) -> Generator[List[T], None, None
         yield ret_chunk
 
 
-class BasePasteFileProtocol(Protocol):
-    content: Union[str, bytes]
-
-    def __hash__(self) -> int: ...
+class BaseFile(abc.ABC, metaclass=abc.ABCMeta):
+    @property
+    @abc.abstractmethod
+    def content(self) -> Union[str, bytes]:
+        ...
 
     @classmethod
-    def from_file(cls: T, file: pathlib.Path) -> T: ...
-
-
-class BasePasteFile:
-    def __init__(self, content: Union[str, bytes]):
-        self.content = content
-
-    def __repr__(self):
-        return f"BasePasteFile(content={self.content!r})"
+    @abc.abstractmethod
+    def from_file(cls: T, file: Union[str, os.PathLike], mode: Literal["r", "rb"] = "r") -> T:
+        """
+        Loads a disk file, converting it into a file ready for pasting
+        """
+        raise NotImplementedError
 
     def __hash__(self):
-        return hash((self.content,))
-
-    def as_json(self):
-        return NotImplemented
-
-    @classmethod
-    def from_file(cls, file: os.PathLike) -> "BasePasteFile":
-        if not isinstance(file, pathlib.Path):
-            file = pathlib.Path(file)
-        try:
-            return cls(file.read_text())
-        except UnicodeDecodeError:
-            return cls(file.read_bytes())
+        return hash(self.content)
 
 
 @dataclass
-class BasePasteResult:
-    """The result of creating a paste"""
-
-    url: str
+class BaseResult(abc.ABC):
     key: str
-
-    def __repr__(self):
-        return f"BasePasteResult(url={self.url!r}, key={self.key!r})"
-
-    @classmethod
-    def from_response(cls, backend: "BaseBackend", data: dict) -> "BasePasteResult":
-        return cls(url=backend.html_url.format(key=data["key"]), key=data.pop("key"))
+    url: str
 
 
 class BaseBackend(abc.ABC):
-    name = "base"
+    name: str = "base"
     base_url = "http://base.invalid"
-    post_url = "http://post.invalid"
-    html_url = "http://base.invalid/{key}"
-    result_class = BasePasteResult
-    file_class = BasePasteFile
+    result_class = BaseResult
+    file_class = BaseFile
 
     @property
     def _logger(self) -> logging.Logger:
         """Gets the logger for this backend"""
         return logging.getLogger(f"superpaste.backends.{self.name.lower().replace('.', '_')}")
 
+    def get_headers(self) -> Dict[str, str]:
+        """
+        Gets headers for the request.
+        """
+        return {
+            "User-Agent": __user_agent__,
+            "Accept": "application/json"
+        }
+
     @contextmanager
-    def with_session(self, session: Optional[httpx.Client]) -> "httpx.Client":
+    def with_session(self, session: Optional[httpx.Client] = None) -> "httpx.Client":
         """
         Return a client session, closing it properly if it was created by this method.
         """
         if not session:
-            with httpx.Client(headers={"User-Agent": __user_agent__}) as session:
+            with httpx.Client(headers=self.get_headers()) as session:
                 yield session
         else:
             yield session
 
     @overload
-    def create_paste(self, files: BasePasteFileProtocol) -> BasePasteResult:
+    def create_paste(self, files: BaseFile) -> BaseResult:
         ...
 
     @overload
-    def create_paste(self, *files: BasePasteFileProtocol) -> List[BasePasteResult]:
+    def create_paste(self, *files: BaseFile) -> List[BaseResult]:
         ...
 
     @abc.abstractmethod
     def create_paste(
             self,
-            *files: BasePasteFileProtocol
-    ) -> Union[BasePasteResult, List[BasePasteResult]]:
+            *files: BaseFile
+    ) -> Union[BaseResult, List[BaseResult]]:
         """
         Creates a paste.
 
@@ -144,14 +126,14 @@ class BaseBackend(abc.ABC):
         raise NotImplementedError
 
     @overload
-    async def async_create_paste(self, files: BasePasteFileProtocol) -> BasePasteResult:
+    async def async_create_paste(self, files: BaseFile) -> BaseResult:
         ...
 
     @overload
-    async def async_create_paste(self, *files: BasePasteFileProtocol) -> List[BasePasteResult]:
+    async def async_create_paste(self, *files: BaseFile) -> List[BaseResult]:
         ...
 
-    async def async_create_paste(self, *files: BasePasteFileProtocol) -> Union[BasePasteResult, List[BasePasteResult]]:
+    async def async_create_paste(self, *files: BaseFile) -> Union[BaseResult, List[BaseResult]]:
         """
         Creates a paste asynchronously.
 
@@ -163,7 +145,7 @@ class BaseBackend(abc.ABC):
         return await asyncio.to_thread(self.create_paste, *files)
 
     @abc.abstractmethod
-    def get_paste(self, key: str) -> BasePasteFile:
+    def get_paste(self, key: str) -> BaseFile:
         """
         Gets a paste.
 
