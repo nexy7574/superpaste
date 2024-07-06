@@ -11,6 +11,9 @@ from .mystb_in import MystbinFile
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
+__all__ = ["PasteEEFile", "PasteEEBackend", "PasteEEResult"]
+PastEEResult = BaseResult
+
 
 class PasteEEFile(MystbinFile):
     # noinspection PyShadowingBuiltins

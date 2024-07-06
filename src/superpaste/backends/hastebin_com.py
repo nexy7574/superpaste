@@ -13,6 +13,14 @@ from .base import BaseResult
 from ._generic import GenericBackend, GenericFile
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
+__all__ = (
+    "HastebinBackend",
+    "HastebinFile",
+    "HastebinResult"
+)
+
+HastebinFile = GenericFile
+HastebinResult = BaseResult
 
 
 class HastebinBackend(GenericBackend):

@@ -15,6 +15,12 @@ from ._generic import GenericFile
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
+__all__ = (
+    "MystbinBackend",
+    "MystbinFile",
+    "MystbinResult",
+)
+
 
 class MystbinFile(GenericFile):
     def __init__(
