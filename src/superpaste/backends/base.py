@@ -1,3 +1,7 @@
+"""
+The "Base" backend is not itself a backend, but a collection of abstract base classes that 
+actual backends should inherit from in order to have a uniform use pattern
+"""
 import abc
 import asyncio
 import logging
@@ -115,12 +119,12 @@ class BaseBackend(abc.ABC):
     @abc.abstractmethod
     def create_paste(
             self,
-            *files: BaseFile
+            *files: Union[BaseFile, str]
     ) -> Union[BaseResult, List[BaseResult]]:
         """
         Creates a paste.
 
-        :param files: The files to upload
+        :param files: The files to upload. Strings are automatically converted to files
         :return: The paste result. Can be multiple if multiple files were uploaded.
         """
         raise NotImplementedError

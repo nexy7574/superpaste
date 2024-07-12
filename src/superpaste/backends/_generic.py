@@ -47,23 +47,27 @@ class GenericBackend(BaseBackend):
         return super().get_headers()
 
     @overload
-    def create_paste(self, files: BaseFile) -> BaseResult:
+    def create_paste(self, files: GenericFile) -> GenericResult:
         ...
 
     @overload
-    def create_paste(self, *files: BaseFile) -> List[BaseResult]:
+    def create_paste(self, *files: GenericFile) -> List[GenericResult]:
         ...
 
     def create_paste(
             self,
-            *files: BaseFile
-    ) -> Union[BaseResult, List[BaseResult]]:
+            *files: Union[GenericFile, str]
+    ) -> Union[GenericResult, List[GenericResult]]:
         """
         Creates a paste.
 
         :param files: The files to upload
         :return: The paste result. Can be multiple if multiple files were uploaded.
         """
+        files = list(files)
+        for n, file in enumerate(files):
+            if isinstance(file, str):
+                files[n] = BaseFile()
         if len(files) > 1:
             results = []
             for file in files:
@@ -78,12 +82,12 @@ class GenericBackend(BaseBackend):
             )
             response.raise_for_status()
             data = response.json()
-            return BaseResult(
+            return GenericResult(
                 data["key"],
                 self.html_url.format(key=data["key"])
             )
 
-    def get_paste(self, key: str) -> BaseFile:
+    def get_paste(self, key: str) -> GenericFile:
         """
         Gets a paste
 
@@ -95,4 +99,4 @@ class GenericBackend(BaseBackend):
                 self.base_url + "/raw/" + key
             )
             response.raise_for_status()
-            return BaseFile(response.text)
+            return GenericFile(response.text)
