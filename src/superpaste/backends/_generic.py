@@ -1,10 +1,9 @@
 import os
+from typing import Dict, List, Literal, Union, overload
 
 import httpx
 
 from .base import BaseBackend, BaseFile, BaseResult
-from typing import Dict, Literal, Union, List, overload
-
 
 __all__ = ("GenericBackend", "GenericFile", "GenericResult")
 
@@ -30,14 +29,12 @@ class GenericBackend(BaseBackend):
     """
     A generic backend for servers running hastebin-compatible servers.
     """
+
     name: str
     file_class = GenericFile
     result_class = GenericResult
 
-    def __init__(
-            self,
-            base_url: str = None
-    ):
+    def __init__(self, base_url: str = None):
         if base_url:
             self.base_url = base_url  # override class var
         self.post_url = self.base_url + "/documents"
@@ -47,17 +44,12 @@ class GenericBackend(BaseBackend):
         return super().get_headers()
 
     @overload
-    def create_paste(self, files: GenericFile) -> GenericResult:
-        ...
+    def create_paste(self, files: GenericFile) -> GenericResult: ...
 
     @overload
-    def create_paste(self, *files: GenericFile) -> List[GenericResult]:
-        ...
+    def create_paste(self, *files: GenericFile) -> List[GenericResult]: ...
 
-    def create_paste(
-            self,
-            *files: Union[GenericFile, str]
-    ) -> Union[GenericResult, List[GenericResult]]:
+    def create_paste(self, *files: Union[GenericFile, str]) -> Union[GenericResult, List[GenericResult]]:
         """
         Creates a paste.
 
@@ -76,16 +68,10 @@ class GenericBackend(BaseBackend):
 
         file = files[0]
         with self.with_session() as session:
-            response: httpx.Response = session.post(
-                self.post_url,
-                data=file.content
-            )
+            response: httpx.Response = session.post(self.post_url, data=file.content)
             response.raise_for_status()
             data = response.json()
-            return GenericResult(
-                data["key"],
-                self.html_url.format(key=data["key"])
-            )
+            return GenericResult(data["key"], self.html_url.format(key=data["key"]))
 
     def get_paste(self, key: str) -> GenericFile:
         """
@@ -95,8 +81,6 @@ class GenericBackend(BaseBackend):
         :return: The file
         """
         with self.with_session() as session:
-            response: httpx.Response = session.get(
-                self.base_url + "/raw/" + key
-            )
+            response: httpx.Response = session.get(self.base_url + "/raw/" + key)
             response.raise_for_status()
             return GenericFile(response.text)

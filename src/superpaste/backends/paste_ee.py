@@ -12,7 +12,7 @@ from .mystb_in import MystbinFile
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
 __all__ = ["PasteEEFile", "PasteEEBackend", "PasteEEResult"]
-PastEEResult = BaseResult
+PasteEEResult = BaseResult
 
 
 class PasteEEFile(MystbinFile):
@@ -102,9 +102,7 @@ class PasteEEBackend(BaseBackend):
         """
         r = []
         with self.with_session() as session:
-            response: httpx.Response = session.get(
-                self.post_url + "/" + key
-            )
+            response: httpx.Response = session.get(self.post_url + "/" + key)
             response.raise_for_status()
             data = response.json()
             for section in data["paste"]["sections"]:

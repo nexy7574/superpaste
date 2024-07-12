@@ -1,7 +1,8 @@
 """
-The "Base" backend is not itself a backend, but a collection of abstract base classes that 
+The "Base" backend is not itself a backend, but a collection of abstract base classes that
 actual backends should inherit from in order to have a uniform use pattern
 """
+
 import abc
 import asyncio
 import logging
@@ -9,7 +10,7 @@ import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib.metadata import version
-from typing import Generator, Iterable, List, Optional, TypeVar, Union, overload, Literal, Dict
+from typing import Dict, Generator, Iterable, List, Literal, Optional, TypeVar, Union, overload
 
 import httpx
 
@@ -56,8 +57,7 @@ def as_chunks(iterable: Iterable[T], size: int) -> Generator[List[T], None, None
 class BaseFile(abc.ABC, metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
-    def content(self) -> Union[str, bytes]:
-        ...
+    def content(self) -> Union[str, bytes]: ...
 
     @classmethod
     @abc.abstractmethod
@@ -92,10 +92,7 @@ class BaseBackend(abc.ABC):
         """
         Gets headers for the request.
         """
-        return {
-            "User-Agent": __user_agent__,
-            "Accept": "application/json"
-        }
+        return {"User-Agent": __user_agent__, "Accept": "application/json"}
 
     @contextmanager
     def with_session(self, session: Optional[httpx.Client] = None) -> "httpx.Client":
@@ -109,18 +106,13 @@ class BaseBackend(abc.ABC):
             yield session
 
     @overload
-    def create_paste(self, files: BaseFile) -> BaseResult:
-        ...
+    def create_paste(self, files: BaseFile) -> BaseResult: ...
 
     @overload
-    def create_paste(self, *files: BaseFile) -> List[BaseResult]:
-        ...
+    def create_paste(self, *files: BaseFile) -> List[BaseResult]: ...
 
     @abc.abstractmethod
-    def create_paste(
-            self,
-            *files: Union[BaseFile, str]
-    ) -> Union[BaseResult, List[BaseResult]]:
+    def create_paste(self, *files: Union[BaseFile, str]) -> Union[BaseResult, List[BaseResult]]:
         """
         Creates a paste.
 
@@ -130,12 +122,10 @@ class BaseBackend(abc.ABC):
         raise NotImplementedError
 
     @overload
-    async def async_create_paste(self, files: BaseFile) -> BaseResult:
-        ...
+    async def async_create_paste(self, files: BaseFile) -> BaseResult: ...
 
     @overload
-    async def async_create_paste(self, *files: BaseFile) -> List[BaseResult]:
-        ...
+    async def async_create_paste(self, *files: BaseFile) -> List[BaseResult]: ...
 
     async def async_create_paste(self, *files: BaseFile) -> Union[BaseResult, List[BaseResult]]:
         """

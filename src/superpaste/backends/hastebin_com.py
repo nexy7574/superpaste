@@ -9,18 +9,13 @@ from typing import List, Union, overload
 
 import httpx
 
-from .base import BaseResult
-from ._generic import GenericBackend, GenericFile
+from ._generic import GenericBackend, GenericFile, GenericResult
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
-__all__ = (
-    "HastebinBackend",
-    "HastebinFile",
-    "HastebinResult"
-)
+__all__ = ("HastebinBackend", "HastebinFile", "HastebinResult")
 
 HastebinFile = GenericFile
-HastebinResult = BaseResult
+HastebinResult = GenericResult
 
 
 class HastebinBackend(GenericBackend):
@@ -42,19 +37,18 @@ class HastebinBackend(GenericBackend):
         return h
 
     @overload
-    def create_paste(self, files: GenericFile) -> BaseResult:
-        ...
+    def create_paste(self, files: GenericFile) -> GenericResult: ...
 
     @overload
-    def create_paste(self, *files: GenericFile) -> List[BaseResult]:
-        ...
+    def create_paste(self, *files: GenericFile) -> List[GenericResult]: ...
 
-    def create_paste(self, *files: GenericFile) -> Union[BaseResult, List[BaseResult]]:
+    def create_paste(self, *files: GenericFile) -> Union[GenericResult, List[GenericResult]]:
         """
         Create a paste on hastebin.com
 
         .. warning::
-            hastebin.com only supports 1 file per paste. If more than one file is provided, multiple pastes will be made.
+            hastebin.com only supports 1 file per paste. If more than one file is provided,
+            multiple pastes will be made.
 
         :param files: The files to post.
         :return: The paste, or multiple if multiple files were provided.
@@ -79,10 +73,7 @@ class HastebinBackend(GenericBackend):
             )
             response.raise_for_status()
             key = response.json()["key"]
-            return BaseResult(
-                key,
-                self.html_url.format(key=key)
-            )
+            return GenericResult(key, self.html_url.format(key=key))
 
     def get_paste(self, key: str) -> GenericFile:
         """

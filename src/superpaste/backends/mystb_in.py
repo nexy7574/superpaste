@@ -6,12 +6,12 @@ import datetime
 import os
 import pathlib
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Union, overload, Literal
+from typing import Dict, List, Literal, Optional, Union, overload
 
 import httpx
 
-from .base import BaseResult, BaseBackend, as_chunks
 from ._generic import GenericFile
+from .base import BaseBackend, BaseResult, as_chunks
 
 __author__ = "nexy7574 <https://github.com/nexy7574>"
 
@@ -77,12 +77,10 @@ class MystbinBackend(BaseBackend):
     file_class = MystbinFile
 
     @overload
-    def create_paste(self, files: MystbinFile) -> MystbinResult:
-        ...
+    def create_paste(self, files: MystbinFile) -> MystbinResult: ...
 
     @overload
-    def create_paste(self, *files: MystbinFile) -> List[MystbinResult]:
-        ...
+    def create_paste(self, *files: MystbinFile) -> List[MystbinResult]: ...
 
     def create_paste(
         self, *files: MystbinFile, expires: datetime.datetime = None, password: str = None
@@ -141,7 +139,7 @@ class MystbinBackend(BaseBackend):
                 datetime.datetime.fromisoformat(data["created_at"]),
                 datetime.datetime.fromisoformat(data["expires"]) if data["expires"] else None,
                 data["safety"],
-                data["views"]
+                data["views"],
             )
 
     def get_paste(self, key: str, password: Optional[str] = None) -> List[MystbinFile]:
